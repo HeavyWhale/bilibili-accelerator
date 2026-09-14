@@ -1,4 +1,4 @@
-# Bilibili Accelerator
+# <img src="docs/assets/logo.svg" alt="" width="40" align="top">&nbsp;Bilibili Accelerator
 
 [English](./README.en.md) · [Greasy Fork](https://greasyfork.org/en/scripts/582026-bilibili-accelerator) · 当前版本 v0.4.0
 
