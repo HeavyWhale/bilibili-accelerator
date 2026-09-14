@@ -12,6 +12,10 @@ const content = await readFile(path.join(root, "src/extension/content.js"), "utf
 const manifest = JSON.parse(await readFile(path.join(root, "src/extension/manifest.json"), "utf8"));
 const popupHtml = await readFile(path.join(root, "src/extension/popup.html"), "utf8");
 const popupJs = await readFile(path.join(root, "src/extension/popup.js"), "utf8");
+// Chrome won't take SVG for extension icons, so src/extension/icons holds PNG
+// exports of docs/assets/logo.svg (logo-16.svg for the 16px one). The
+// userscript's @icon embeds the 48px one.
+const scriptIcon = await readFile(path.join(root, "src/extension/icons/icon-48.png"));
 
 // package.json is the single source of truth for the release version; the page
 // script's VERSION constant is held to it by a unit test.
@@ -32,6 +36,7 @@ const userscriptHeader = `// ==UserScript==
 // @match        https://*.bilibili.tv/*
 // @run-at       document-start
 // @grant        none
+// @icon         data:image/png;base64,${scriptIcon.toString("base64")}
 // ==/UserScript==
 `;
 
@@ -44,6 +49,11 @@ await writeFile(path.join(extensionDist, "content.js"), content);
 await writeFile(path.join(extensionDist, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 await writeFile(path.join(extensionDist, "popup.html"), popupHtml);
 await writeFile(path.join(extensionDist, "popup.js"), popupJs);
+const icons = new Set([...Object.values(manifest.icons), ...Object.values(manifest.action.default_icon)]);
+for (const icon of icons) {
+  await mkdir(path.dirname(path.join(extensionDist, icon)), { recursive: true });
+  await copyFile(path.join(root, "src/extension", icon), path.join(extensionDist, icon));
+}
 await copyFile(path.join(root, "README.md"), path.join(dist, "README.md")).catch(() => {});
 await copyFile(path.join(root, "README.en.md"), path.join(dist, "README.en.md")).catch(() => {});
 
