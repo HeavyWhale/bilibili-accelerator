@@ -7,7 +7,7 @@
   }
   root.__BILI_ACCELERATOR_INSTALLED__ = true;
 
-  const VERSION = "0.4.0";
+  const VERSION = "0.4.1";
   const STORAGE_KEY = "biliAccelerator.config.v2";
   const LEGACY_KEY = "biliAccelerator.config.v1";
   // Bumped when the pool or the scoring changes: a cached ranking only names

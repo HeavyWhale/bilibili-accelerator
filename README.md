@@ -1,6 +1,6 @@
 # Bilibili Accelerator
 
-[English](./README.en.md) · [Greasy Fork](https://greasyfork.org/en/scripts/582026-bilibili-accelerator) · 当前版本 v0.4.0
+[English](./README.en.md) · [Greasy Fork](https://greasyfork.org/en/scripts/582026-bilibili-accelerator) · 当前版本 v0.4.1
 
 海外看 B 站，热门视频一般没什么问题，冷门视频经常一会儿流畅、一会儿卡死。
 
@@ -55,6 +55,7 @@ npm run build
 
 | 版本 | 主要变化 |
 | --- | --- |
+| v0.4.1 | 固定服务器改为下拉选择：原输入框在已有地址时只列出匹配的候选，须先清空才能看到其他服务器。列表改为自动模式实测的 8 个服务器，不再提供 Akamai（改写到 Akamai 的视频请求会返回 403），其他地址可通过「自定义…」填写。该设置仅在选择「使用固定服务器」后显示，自动模式下服务器由测速结果决定。高级设置中下拉框与输入框的文字左侧现已对齐 |
 | v0.4.0 | 后台播放修复：切换至其他标签页后不再于数秒内卡住（Safari 最明显）。起因是加速器将 B 站自家的海外镜像改写至境内 CDN。候选服务器现覆盖境内外两档并全部参与实测，排序改为按实测吞吐而非应答时间，卡顿切换改为遍历完整列表。直播页的 ⚡ 图标也改为自动隐藏，不再遮挡弹幕栏 |
 | [v0.3.0](https://github.com/realzza/bilibili-accelerator/releases/tag/v0.3.0) | 面板深浅色 + 7 套主题色；顶部主题 / 语言改成同一套滑动控件。核心逻辑没动 |
 | [v0.2.3](https://github.com/realzza/bilibili-accelerator/releases/tag/v0.2.3) | 直播场景的稳定性修复；探测逻辑更准确；卡顿恢复会持续重试 |

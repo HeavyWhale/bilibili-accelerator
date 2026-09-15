@@ -1,6 +1,6 @@
 # Bilibili Accelerator
 
-[中文](./README.md) · [Greasy Fork](https://greasyfork.org/en/scripts/582026-bilibili-accelerator) · v0.4.0
+[中文](./README.md) · [Greasy Fork](https://greasyfork.org/en/scripts/582026-bilibili-accelerator) · v0.4.1
 
 Watching Bilibili from outside mainland China, popular videos are usually fine. Everything else tends to stutter — smooth one moment, buffering the next.
 
@@ -55,6 +55,7 @@ Full notes live in [Releases](https://github.com/realzza/bilibili-accelerator/re
 
 | Version | What changed |
 | --- | --- |
+| v0.4.1 | Fixed server is now a dropdown: the old text box only suggested hosts matching its current value, so the other servers stayed hidden until it was cleared. The list is the eight servers auto mode measures and no longer offers Akamai, which returns 403 for rewritten video requests. Other hosts can still be entered through the Custom… option. The setting only shows once "Use a fixed server" is selected, since auto mode picks the server from its own measurements. Dropdowns and text fields in advanced settings now line up |
 | v0.4.0 | Fixes background playback for overseas viewers: switching tabs no longer stalls the video after a few seconds (worst on Safari). The accelerator had been rewriting Bilibili's own overseas mirrors onto mainland CDNs. Candidate servers now span both tiers and are all measured, ranking is by measured throughput instead of response time, and stall switching walks the full list. The ⚡ badge also auto-hides on live pages instead of covering the chat column |
 | [v0.3.0](https://github.com/realzza/bilibili-accelerator/releases/tag/v0.3.0) | Light/dark panel and seven accent themes; header theme and language share one sliding control. Core behavior untouched |
 | [v0.2.3](https://github.com/realzza/bilibili-accelerator/releases/tag/v0.2.3) | Stability fixes for live playback, more accurate probing, and stall recovery that keeps retrying |
