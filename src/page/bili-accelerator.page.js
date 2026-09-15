@@ -114,7 +114,8 @@
       "--ba-dot-bg": "#eef2f6", "--ba-dot": "#9aa6b2",
       "--ba-good-bg": "#e6f8ee", "--ba-good": "#19a974",
       "--ba-warn-bg": "#fff4e0", "--ba-warn": "#e8910c",
-      "--ba-slider-off": "#c9d3dd", "--ba-panel-shadow": "rgba(21,32,43,.24)"
+      "--ba-slider-off": "#c9d3dd", "--ba-panel-shadow": "rgba(21,32,43,.24)",
+      "--ba-chevron": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b7785' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")"
     },
     dark: {
       "--ba-surface": "rgba(22,26,32,.975)", "--ba-card": "#1c222b",
@@ -124,7 +125,8 @@
       "--ba-dot-bg": "#262d37", "--ba-dot": "#6f7b87",
       "--ba-good-bg": "rgba(25,169,116,.16)", "--ba-good": "#2ed3a0",
       "--ba-warn-bg": "rgba(232,145,12,.16)", "--ba-warn": "#f0a838",
-      "--ba-slider-off": "#3a434f", "--ba-panel-shadow": "rgba(0,0,0,.5)"
+      "--ba-slider-off": "#3a434f", "--ba-panel-shadow": "rgba(0,0,0,.5)",
+      "--ba-chevron": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2393a0ac' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")"
     }
   };
 
@@ -1814,7 +1816,7 @@
       // Appearance tokens (light + Bilibili-blue baseline). applyTheme() layers
       // the resolved accent + dark/light surface over these via inline vars on
       // the host, which inherit across the shadow boundary.
-      ":host{--ba-accent:#00aeec;--ba-accent-strong:#0091cc;--ba-grad-a:#00b5f5;--ba-grad-b:#0091cc;--ba-accent-shadow:rgba(0,174,236,.42);--ba-surface:rgba(255,255,255,.97);--ba-card:#fff;--ba-border:#e5eaf0;--ba-border-in:#d5dde5;--ba-ink:#17202a;--ba-ink-strong:#111827;--ba-ink-mid:#46515c;--ba-ink-soft:#6b7785;--ba-ink-faint:#8a95a1;--ba-dot-bg:#eef2f6;--ba-dot:#9aa6b2;--ba-good-bg:#e6f8ee;--ba-good:#19a974;--ba-warn-bg:#fff4e0;--ba-warn:#e8910c;--ba-slider-off:#c9d3dd;--ba-panel-shadow:rgba(21,32,43,.24)}",
+      ":host{--ba-accent:#00aeec;--ba-accent-strong:#0091cc;--ba-grad-a:#00b5f5;--ba-grad-b:#0091cc;--ba-accent-shadow:rgba(0,174,236,.42);--ba-surface:rgba(255,255,255,.97);--ba-card:#fff;--ba-border:#e5eaf0;--ba-border-in:#d5dde5;--ba-ink:#17202a;--ba-ink-strong:#111827;--ba-ink-mid:#46515c;--ba-ink-soft:#6b7785;--ba-ink-faint:#8a95a1;--ba-dot-bg:#eef2f6;--ba-dot:#9aa6b2;--ba-good-bg:#e6f8ee;--ba-good:#19a974;--ba-warn-bg:#fff4e0;--ba-warn:#e8910c;--ba-slider-off:#c9d3dd;--ba-panel-shadow:rgba(21,32,43,.24);--ba-chevron:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b7785' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")}",
       ":host{position:fixed;right:18px;bottom:18px;z-index:2147483647;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ba-ink);transition:opacity .25s ease}",
       ":host(.ba-immersed){opacity:0;pointer-events:none}",
       ":host(.ba-lifted){bottom:84px}",
@@ -1875,6 +1877,10 @@
       ".ba-field[hidden]{display:none}",
       ".ba-field span{color:var(--ba-ink-mid);font-weight:650}",
       ".ba-control,.ba-field input[type=text],.ba-field select{width:100%;min-width:0;height:32px;border:1px solid var(--ba-border-in);border-radius:8px;padding:0 9px;background:var(--ba-card);color:var(--ba-ink);outline:none;font-size:11px}",
+      // Native <select> adds its own start inset on top of our padding (4px in
+      // Chromium, 8px in WebKit), so its text never lined up with a text input.
+      // Dropping the native appearance removes the inset; the chevron is ours.
+      ".ba-field select{-webkit-appearance:none;appearance:none;padding-right:26px;background-image:var(--ba-chevron);background-repeat:no-repeat;background-position:right 8px center;background-size:8px 5px}",
       ".ba-swatches{display:flex;align-items:center;gap:7px;min-height:32px;flex-wrap:wrap}",
       ".ba-sw{width:22px;height:22px;border-radius:50%;padding:0;border:none;cursor:pointer;box-shadow:0 0 0 1px var(--ba-border-in) inset;transition:transform .12s ease}",
       ".ba-sw:hover{transform:scale(1.12)}",
