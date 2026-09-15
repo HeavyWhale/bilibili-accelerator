@@ -2,7 +2,7 @@
 // @name         Bilibili Accelerator
 // @name:zh-CN   Bilibili Accelerator - B站海外播放加速
 // @namespace    https://github.com/realzza/bilibili-accelerator
-// @version      0.4.0
+// @version      0.4.1
 // @description  Smoother Bilibili playback for overseas viewers.
 // @description:zh-CN 缓解海外用户看 B 站冷门视频时的卡顿。
 // @author       realzza
@@ -719,7 +719,7 @@
   }
   root.__BILI_ACCELERATOR_INSTALLED__ = true;
 
-  const VERSION = "0.4.0";
+  const VERSION = "0.4.1";
   const STORAGE_KEY = "biliAccelerator.config.v2";
   const LEGACY_KEY = "biliAccelerator.config.v1";
   // Bumped when the pool or the scoring changes: a cached ranking only names
@@ -826,7 +826,8 @@
       "--ba-dot-bg": "#eef2f6", "--ba-dot": "#9aa6b2",
       "--ba-good-bg": "#e6f8ee", "--ba-good": "#19a974",
       "--ba-warn-bg": "#fff4e0", "--ba-warn": "#e8910c",
-      "--ba-slider-off": "#c9d3dd", "--ba-panel-shadow": "rgba(21,32,43,.24)"
+      "--ba-slider-off": "#c9d3dd", "--ba-panel-shadow": "rgba(21,32,43,.24)",
+      "--ba-chevron": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b7785' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")"
     },
     dark: {
       "--ba-surface": "rgba(22,26,32,.975)", "--ba-card": "#1c222b",
@@ -836,7 +837,8 @@
       "--ba-dot-bg": "#262d37", "--ba-dot": "#6f7b87",
       "--ba-good-bg": "rgba(25,169,116,.16)", "--ba-good": "#2ed3a0",
       "--ba-warn-bg": "rgba(232,145,12,.16)", "--ba-warn": "#f0a838",
-      "--ba-slider-off": "#3a434f", "--ba-panel-shadow": "rgba(0,0,0,.5)"
+      "--ba-slider-off": "#3a434f", "--ba-panel-shadow": "rgba(0,0,0,.5)",
+      "--ba-chevron": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2393a0ac' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")"
     }
   };
 
@@ -2232,6 +2234,7 @@
       },
       fServer: "Server", fWhen: "When", fFixed: "Fixed server", fMcdn: "MCDN",
       selAuto: "Auto (pick fastest)", selFixed: "Use a fixed server",
+      hostCustom: "Custom…", fCustomHost: "Server address", hostPlaceholder: "Enter a server address",
       modeBad: "Only fix slow servers", modeForce: "Always switch server",
       mcdnAll: "Proxy all MCDN", mcdnV1: "Proxy /v1 only", mcdnReplace: "Replace host",
       portTitle: "Catch hidden PCDN", portNote: "Treat odd-port servers as slow (recommended)",
@@ -2271,6 +2274,7 @@
       },
       fServer: "服务器", fWhen: "何时", fFixed: "固定服务器", fMcdn: "MCDN",
       selAuto: "自动（选最快）", selFixed: "使用固定服务器",
+      hostCustom: "自定义…", fCustomHost: "服务器地址", hostPlaceholder: "请输入服务器地址",
       modeBad: "仅修复慢服务器", modeForce: "总是切换服务器",
       mcdnAll: "代理所有 MCDN", mcdnV1: "仅代理 /v1", mcdnReplace: "替换域名",
       portTitle: "抓取隐藏 PCDN", portNote: "把奇怪端口的服务器当作慢节点（推荐）",
@@ -2310,6 +2314,9 @@
     }
     shadow.querySelectorAll("[data-i18n]").forEach(function (el) {
       el.textContent = t(el.dataset.i18n);
+    });
+    shadow.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+      el.placeholder = t(el.dataset.i18nPlaceholder);
     });
     const adv = shadow.querySelector(".ba-adv");
     setAdvToggleLabel(adv && adv.classList.contains("open"));
@@ -2521,7 +2528,7 @@
       // Appearance tokens (light + Bilibili-blue baseline). applyTheme() layers
       // the resolved accent + dark/light surface over these via inline vars on
       // the host, which inherit across the shadow boundary.
-      ":host{--ba-accent:#00aeec;--ba-accent-strong:#0091cc;--ba-grad-a:#00b5f5;--ba-grad-b:#0091cc;--ba-accent-shadow:rgba(0,174,236,.42);--ba-surface:rgba(255,255,255,.97);--ba-card:#fff;--ba-border:#e5eaf0;--ba-border-in:#d5dde5;--ba-ink:#17202a;--ba-ink-strong:#111827;--ba-ink-mid:#46515c;--ba-ink-soft:#6b7785;--ba-ink-faint:#8a95a1;--ba-dot-bg:#eef2f6;--ba-dot:#9aa6b2;--ba-good-bg:#e6f8ee;--ba-good:#19a974;--ba-warn-bg:#fff4e0;--ba-warn:#e8910c;--ba-slider-off:#c9d3dd;--ba-panel-shadow:rgba(21,32,43,.24)}",
+      ":host{--ba-accent:#00aeec;--ba-accent-strong:#0091cc;--ba-grad-a:#00b5f5;--ba-grad-b:#0091cc;--ba-accent-shadow:rgba(0,174,236,.42);--ba-surface:rgba(255,255,255,.97);--ba-card:#fff;--ba-border:#e5eaf0;--ba-border-in:#d5dde5;--ba-ink:#17202a;--ba-ink-strong:#111827;--ba-ink-mid:#46515c;--ba-ink-soft:#6b7785;--ba-ink-faint:#8a95a1;--ba-dot-bg:#eef2f6;--ba-dot:#9aa6b2;--ba-good-bg:#e6f8ee;--ba-good:#19a974;--ba-warn-bg:#fff4e0;--ba-warn:#e8910c;--ba-slider-off:#c9d3dd;--ba-panel-shadow:rgba(21,32,43,.24);--ba-chevron:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b7785' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")}",
       ":host{position:fixed;right:18px;bottom:18px;z-index:2147483647;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ba-ink);transition:opacity .25s ease}",
       ":host(.ba-immersed){opacity:0;pointer-events:none}",
       ":host(.ba-lifted){bottom:84px}",
@@ -2579,8 +2586,13 @@
       ".ba-adv{display:none;margin-top:8px}",
       ".ba-adv.open{display:block}",
       ".ba-field{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:9px;margin:9px 0;font-size:12px}",
+      ".ba-field[hidden]{display:none}",
       ".ba-field span{color:var(--ba-ink-mid);font-weight:650}",
       ".ba-control,.ba-field input[type=text],.ba-field select{width:100%;min-width:0;height:32px;border:1px solid var(--ba-border-in);border-radius:8px;padding:0 9px;background:var(--ba-card);color:var(--ba-ink);outline:none;font-size:11px}",
+      // Native <select> adds its own start inset on top of our padding (4px in
+      // Chromium, 8px in WebKit), so its text never lined up with a text input.
+      // Dropping the native appearance removes the inset; the chevron is ours.
+      ".ba-field select{-webkit-appearance:none;appearance:none;padding-right:26px;background-image:var(--ba-chevron);background-repeat:no-repeat;background-position:right 8px center;background-size:8px 5px}",
       ".ba-swatches{display:flex;align-items:center;gap:7px;min-height:32px;flex-wrap:wrap}",
       ".ba-sw{width:22px;height:22px;border-radius:50%;padding:0;border:none;cursor:pointer;box-shadow:0 0 0 1px var(--ba-border-in) inset;transition:transform .12s ease}",
       ".ba-sw:hover{transform:scale(1.12)}",
@@ -2738,6 +2750,7 @@
       { value: "fixed", key: "selFixed" }
     ], config.selection, function (value) {
       saveConfig(Object.assign({}, config, { selection: value }));
+      syncHostControls();
     });
 
     const mode = createSelect([
@@ -2750,18 +2763,53 @@
 
     const hostInput = document.createElement("input");
     hostInput.type = "text";
+    hostInput.id = "ba-custom-host";
     hostInput.className = "ba-control";
-    hostInput.value = config.pcdnHost;
-    hostInput.setAttribute("list", "ba-hosts");
-    hostInput.addEventListener("change", function () {
-      saveConfig(Object.assign({}, config, { pcdnHost: hostInput.value }));
-    });
-    const hostList = document.createElement("datalist");
-    hostList.id = "ba-hosts";
-    core.CDN_HOSTS.forEach(function (h) {
+    hostInput.dataset.i18nPlaceholder = "hostPlaceholder";
+    hostInput.placeholder = t("hostPlaceholder");
+    const customHostField = createField("fCustomHost", hostInput);
+    const hostSelect = document.createElement("select");
+    hostSelect.id = "ba-fixed-host";
+    hostSelect.className = "ba-control";
+    core.CANDIDATE_POOL.forEach(function (h) {
       const option = document.createElement("option");
       option.value = h;
-      hostList.appendChild(option);
+      option.textContent = h;
+      hostSelect.appendChild(option);
+    });
+    // This sentinel belongs only to the UI; never persist it as a host.
+    hostSelect.appendChild(makeOption("custom", "hostCustom", ""));
+    const fixedHostField = createField("fFixed", hostSelect);
+
+    // Show the host in use. Only fixed mode displays these rows, and in fixed
+    // mode nothing but these two controls changes pcdnHost.
+    function syncHostControls() {
+      const fixed = config.selection === "fixed";
+      const listed = core.CANDIDATE_POOL.indexOf(config.pcdnHost) !== -1;
+      hostSelect.value = listed ? config.pcdnHost : "custom";
+      hostInput.value = config.pcdnHost;
+      fixedHostField.hidden = !fixed;
+      customHostField.hidden = !fixed || listed;
+    }
+    syncHostControls();
+
+    hostInput.addEventListener("change", function () {
+      const value = hostInput.value.trim();
+      if (value) {
+        saveConfig(Object.assign({}, config, { pcdnHost: value }));
+      }
+      // An empty address is never saved: this puts the host in use back.
+      syncHostControls();
+    });
+    hostSelect.addEventListener("change", function () {
+      if (hostSelect.value === "custom") {
+        customHostField.hidden = false;
+        hostInput.focus();
+        hostInput.select();
+        return;
+      }
+      saveConfig(Object.assign({}, config, { pcdnHost: hostSelect.value }));
+      syncHostControls();
     });
 
     const mcdn = createSelect([
@@ -2822,9 +2870,9 @@
 
     adv.appendChild(createSwatchField("fAccent", createAccentPicker()));
     adv.appendChild(createField("fServer", selection));
+    adv.appendChild(fixedHostField);
+    adv.appendChild(customHostField);
     adv.appendChild(createField("fWhen", mode));
-    adv.appendChild(createField("fFixed", hostInput));
-    adv.appendChild(hostList);
     adv.appendChild(createField("fMcdn", mcdn));
     adv.appendChild(portRow);
     adv.appendChild(stallRow);

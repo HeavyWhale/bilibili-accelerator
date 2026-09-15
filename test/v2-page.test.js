@@ -127,14 +127,21 @@ function loadPageWithVideo() {
   return { sandbox, document, video };
 }
 
-function loadPageWithLiveHost() {
+function loadPageWithLiveHost(initialConfig) {
   const core = fs.readFileSync(path.join(__dirname, "../src/core/rewrite.js"), "utf8");
   const page = fs.readFileSync(path.join(__dirname, "../src/page/bili-accelerator.page.js"), "utf8");
   const nodes = new Map();
+  const elements = [];
+  const storage = new Map();
+  if (initialConfig) {
+    storage.set("biliAccelerator.config.v2", JSON.stringify(initialConfig));
+  }
 
   function makeElement(tagName) {
     const classes = new Set();
     const children = [];
+    const listeners = new Map();
+    const attributes = new Map();
     const element = {
       tagName: tagName.toUpperCase(),
       id: "",
@@ -165,18 +172,30 @@ function loadPageWithLiveHost() {
         }
         return child;
       },
-      addEventListener() {},
+      addEventListener(type, callback) { listeners.set(type, callback); },
+      dispatch(type) { if (listeners.has(type)) listeners.get(type)(); },
+      focus() { element.focused = true; },
+      select() { element.textSelected = true; },
       attachShadow() {
         const shadow = {
           appendChild() {},
           querySelector() { return null; },
           getElementById() { return null; },
-          querySelectorAll() { return []; }
+          querySelectorAll(selector) {
+            if (selector === "[data-i18n]") {
+              return elements.filter(el => el.dataset.i18n);
+            }
+            if (selector === "[data-i18n-placeholder]") {
+              return elements.filter(el => el.dataset.i18nPlaceholder);
+            }
+            return [];
+          }
         };
         element.shadowRoot = shadow;
         return shadow;
       },
-      setAttribute() {},
+      setAttribute(name, value) { attributes.set(name, value); },
+      getAttribute(name) { return attributes.get(name) ?? null; },
       remove() {},
       querySelector(selector) {
         if (selector === "input") {
@@ -197,6 +216,7 @@ function loadPageWithLiveHost() {
       querySelectorAll() { return []; }
     };
     element.__children = children;
+    elements.push(element);
     return element;
   }
 
@@ -229,7 +249,10 @@ function loadPageWithLiveHost() {
     },
     navigator: { language: "en-US", clipboard: { writeText() {} } },
     console: { info() {}, warn() {}, error() {} },
-    localStorage: { getItem: () => null, setItem() {} },
+    localStorage: {
+      getItem(key) { return storage.get(key) || null; },
+      setItem(key, value) { storage.set(key, value); }
+    },
     location: { href: "https://live.bilibili.com/123", hostname: "live.bilibili.com", reload() {} },
     document,
     setTimeout(callback) { callback(); return 1; },
@@ -242,8 +265,152 @@ function loadPageWithLiveHost() {
   sandbox.addEventListener = () => {};
 
   vm.runInNewContext(`${core}\n${page}`, sandbox);
-  return { sandbox, document };
+  return { sandbox, document, elements, storage };
 }
+
+// The panel controls the fixed-server tests drive. Server's own <select> has
+// no id, so it is found by its options.
+function fixedServerPanel(initialConfig) {
+  const page = loadPageWithLiveHost(initialConfig);
+  const { document, elements } = page;
+  const hostSelect = document.getElementById("ba-fixed-host");
+  const hostInput = document.getElementById("ba-custom-host");
+  const selection = elements.find(el => el.tagName === "SELECT" &&
+    el.__children.some(option => option.value === "fixed"));
+  const fieldOf = control => elements.find(el => el.__children.includes(control));
+  return Object.assign(page, {
+    core: page.sandbox.BiliAcceleratorCore,
+    config: () => page.sandbox.BiliAccelerator.getConfig(),
+    hostSelect,
+    hostInput,
+    selection,
+    serverField: fieldOf(selection),
+    fixedField: fieldOf(hostSelect),
+    customField: fieldOf(hostInput),
+    adv: elements.find(el => el.className === "ba-adv")
+  });
+}
+
+test("fixed-server picker offers the candidate pool plus Custom, and no Akamai host", () => {
+  const { core, hostSelect } = fixedServerPanel({ selection: "fixed" });
+  const values = hostSelect.__children.map(option => option.value);
+  assert.deepEqual(values, [...core.CANDIDATE_POOL, "custom"]);
+  // Akamai answers upos-signed URLs with 403, so listing it offers a broken choice.
+  assert.equal(values.some(value => value.endsWith(".akamaized.net")), false,
+    "Akamai hosts must not be offered as fixed servers");
+});
+
+test("fixed-server rows are hidden in auto mode and follow Server in fixed mode", () => {
+  const panel = fixedServerPanel({ selection: "auto", pcdnHost: "upos-sz-mirroraliov.bilivideo.com" });
+  assert.equal(panel.fixedField.hidden, true,
+    "auto mode overwrites pcdnHost from the ranking, so the picker has nothing to set");
+  assert.equal(panel.customField.hidden, true);
+  const rows = panel.adv.__children;
+  assert.equal(rows.indexOf(panel.fixedField), rows.indexOf(panel.serverField) + 1,
+    "the picker sits directly under Server");
+  assert.equal(rows.indexOf(panel.customField), rows.indexOf(panel.serverField) + 2);
+
+  panel.selection.value = "fixed";
+  panel.selection.dispatch("change");
+  assert.equal(panel.fixedField.hidden, false);
+  assert.equal(panel.customField.hidden, true, "a listed host needs no address field");
+  assert.equal(panel.hostSelect.value, "upos-sz-mirroraliov.bilivideo.com",
+    "switching to fixed keeps the host auto mode was using");
+  assert.equal(panel.config().pcdnHost, "upos-sz-mirroraliov.bilivideo.com");
+
+  panel.selection.value = "auto";
+  panel.selection.dispatch("change");
+  assert.equal(panel.fixedField.hidden, true);
+});
+
+test("a saved host outside the pool is restored under Custom", () => {
+  for (const host of ["upos-hz-mirrorakam.akamaized.net", "custom.example.com"]) {
+    const panel = fixedServerPanel({ selection: "fixed", pcdnHost: host });
+    assert.equal(panel.hostSelect.value, "custom", `${host} is not in the pool`);
+    assert.equal(panel.customField.hidden, false);
+    assert.equal(panel.hostInput.value, host);
+    assert.equal(panel.config().pcdnHost, host, "restoring must not rewrite the saved host");
+  }
+});
+
+test("choosing Custom opens the address field without saving anything", () => {
+  const panel = fixedServerPanel({ selection: "fixed" });
+  const stored = panel.storage.get("biliAccelerator.config.v2");
+  const host = panel.config().pcdnHost;
+  panel.hostSelect.value = "custom";
+  panel.hostSelect.dispatch("change");
+  assert.equal(panel.customField.hidden, false);
+  assert.equal(panel.hostInput.focused, true);
+  assert.equal(panel.hostInput.textSelected, true,
+    "the prefilled host is selected so typing replaces it");
+  assert.equal(panel.hostInput.value, host);
+  assert.equal(panel.config().pcdnHost, host);
+  assert.equal(panel.storage.get("biliAccelerator.config.v2"), stored,
+    "the Custom sentinel is never saved");
+});
+
+test("an empty address is not saved and the host in use comes back", () => {
+  const listed = fixedServerPanel({ selection: "fixed", pcdnHost: "upos-sz-mirrorali.bilivideo.com" });
+  listed.hostSelect.value = "custom";
+  listed.hostSelect.dispatch("change");
+  listed.hostInput.value = "   ";
+  listed.hostInput.dispatch("change");
+  assert.equal(listed.config().pcdnHost, "upos-sz-mirrorali.bilivideo.com");
+  assert.equal(listed.hostSelect.value, "upos-sz-mirrorali.bilivideo.com",
+    "clearing the field falls back to the listed host still in use");
+  assert.equal(listed.customField.hidden, true);
+
+  const custom = fixedServerPanel({ selection: "fixed", pcdnHost: "custom.example.com" });
+  custom.hostInput.value = "";
+  custom.hostInput.dispatch("change");
+  assert.equal(custom.config().pcdnHost, "custom.example.com");
+  assert.equal(custom.hostInput.value, "custom.example.com", "the custom host in use is put back");
+  assert.equal(custom.customField.hidden, false);
+});
+
+test("a typed address is trimmed, saved and restored; a pool host typed in moves the picker", () => {
+  const panel = fixedServerPanel({ selection: "fixed" });
+  panel.hostSelect.value = "custom";
+  panel.hostSelect.dispatch("change");
+  panel.hostInput.value = "  custom.example.com  ";
+  panel.hostInput.dispatch("change");
+  assert.equal(panel.config().pcdnHost, "custom.example.com");
+  assert.equal(panel.hostInput.value, "custom.example.com");
+
+  const restored = fixedServerPanel(JSON.parse(panel.storage.get("biliAccelerator.config.v2")));
+  assert.equal(restored.hostSelect.value, "custom");
+  assert.equal(restored.hostInput.value, "custom.example.com");
+
+  panel.hostInput.value = "upos-sz-mirrorhw.bilivideo.com";
+  panel.hostInput.dispatch("change");
+  assert.equal(panel.hostSelect.value, "upos-sz-mirrorhw.bilivideo.com",
+    "a pool host typed by hand shows as that option, as it would after a reload");
+  assert.equal(panel.customField.hidden, true);
+});
+
+test("picking a listed host saves it and leaves the selection mode alone", () => {
+  const panel = fixedServerPanel({ selection: "fixed" });
+  const host = panel.core.CANDIDATE_POOL[3];
+  panel.hostSelect.value = host;
+  panel.hostSelect.dispatch("change");
+  assert.equal(panel.config().pcdnHost, host);
+  assert.equal(panel.config().selection, "fixed");
+  assert.equal(JSON.parse(panel.storage.get("biliAccelerator.config.v2")).pcdnHost, host);
+  assert.equal(panel.customField.hidden, true);
+});
+
+test("the address placeholder and the Custom label follow the panel language", () => {
+  const panel = fixedServerPanel({ selection: "fixed" });
+  const customOption = panel.hostSelect.__children.at(-1);
+  const languageButtons = panel.document.getElementById("ba-lang-seg").__children;
+  assert.equal(panel.hostInput.placeholder, "Enter a server address");
+  languageButtons[2].dispatch("click");
+  assert.equal(panel.hostInput.placeholder, "请输入服务器地址",
+    "applyLang() must refresh placeholders, not only [data-i18n] text");
+  assert.equal(customOption.textContent, "自定义…");
+  languageButtons[1].dispatch("click");
+  assert.equal(panel.hostInput.placeholder, "Enter a server address");
+});
 
 test("XHR open() rewrites a renamed PCDN segment URL (mountaintoys)", () => {
   const sandbox = loadPage();
